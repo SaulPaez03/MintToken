@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { toast } from "react-toastify";
 export default function Home() {
-  const contractAddress = "0x3f491D671491422A4bA4C7E1124c5245858e2BDE";
+  const contractAddress = "0x5d9518ae5178861427e3445a8c477647A1Eb3033";
   const contractAbi = MyToken.abi;
 
   const [isWalletConnected, setIswalletConnected] = useState(false);
