@@ -1,4 +1,4 @@
-import { BrowserProvider, Contract } from "ethers";
+import { BrowserProvider, Contract, ethers } from "ethers";
 import { MouseEventHandler, useEffect, useState } from "react";
 import MyToken from "../contracts/MyToken.json";
 import {
@@ -17,6 +17,9 @@ export default function Home() {
 
   const [isWalletConnected, setIswalletConnected] = useState(false);
   const [wallet, setWallet] = useState<string | null>(null);
+  const [owner, setOwner] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [isOwner, setIsOwner] = useState(false);
   const checkIfWalletIsConnected = async () => {
     try {
       if (window.ethereum) {
@@ -27,6 +30,36 @@ export default function Home() {
         const account = accounts[0];
         setIswalletConnected(true);
         setWallet(account);
+      } else {
+        toast.error(
+          "Please install Metamask not found, install it and try again."
+        );
+        console.log("Metamask not found");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getContractInfo = async () => {
+    try {
+      if (window.ethereum) {
+        const provider = new BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const contract = new Contract(contractAddress, contractAbi, signer);
+
+        const owner = await contract.owner();
+        const name = await contract.name();
+        console.log(name);
+
+        setOwner(owner);
+        setName(name);
+
+        const [account] = await window.ethereum.request({
+          method: "eth_requestAccounts",
+        });
+
+        if (account.toLowerCase() === owner.toLoserCase()) setIsOwner(true);
       } else {
         toast.error(
           "Please install Metamask not found, install it and try again."
@@ -68,6 +101,12 @@ export default function Home() {
     checkIfWalletIsConnected();
   }, []);
 
+  useEffect(() => {
+    if (isWalletConnected) {
+      getContractInfo();
+    }
+  }, [isWalletConnected]);
+
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -92,6 +131,12 @@ export default function Home() {
             gap: 3,
           }}
         >
+          {isWalletConnected && (
+            <Typography variant={isSmallScreen ? "h4" : "h3"}>
+              {name}
+            </Typography>
+          )}
+
           <Typography variant={isSmallScreen ? "body2" : "body1"}>
             {isWalletConnected
               ? `Connected account: ${wallet}`
@@ -99,9 +144,18 @@ export default function Home() {
           </Typography>
 
           {isWalletConnected && (
+            <Typography variant={isSmallScreen ? "body2" : "body1"}>
+              {`Contract owner address: ${owner}`}
+            </Typography>
+          )}
+          {isOwner ? (
             <Button variant="contained" color="secondary" onClick={mintHandler}>
               Mint NFT ✨
             </Button>
+          ) : (
+            <Typography variant={isSmallScreen ? "body2" : "body1"}>
+              To mint this token, you must be the contract owner
+            </Typography>
           )}
           <Button
             variant="contained"
