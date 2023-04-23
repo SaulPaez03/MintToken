@@ -16,6 +16,7 @@ export default function Home() {
   const contractAbi = MyToken.abi;
 
   const [isWalletConnected, setIswalletConnected] = useState(false);
+  const [balance, setBalance] = useState("");
   const [wallet, setWallet] = useState<string | null>(null);
   const [owner, setOwner] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -47,6 +48,7 @@ export default function Home() {
         const provider = new BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
         const contract = new Contract(contractAddress, contractAbi, signer);
+        const balance = await provider.getBalance(signer.address);
 
         const owner = await contract.owner();
         const name = await contract.name();
@@ -54,12 +56,10 @@ export default function Home() {
 
         setOwner(owner);
         setName(name);
+        setBalance(ethers.formatEther(balance));
 
-        const [account] = await window.ethereum.request({
-          method: "eth_requestAccounts",
-        });
-
-        if (account.toLowerCase() === owner.toLoserCase()) setIsOwner(true);
+        if (signer.address.toLowerCase() === owner.toLowerCase())
+          setIsOwner(true);
       } else {
         toast.error(
           "Please install Metamask not found, install it and try again."
@@ -136,26 +136,26 @@ export default function Home() {
               {name}
             </Typography>
           )}
-
-          <Typography variant={isSmallScreen ? "body2" : "body1"}>
-            {isWalletConnected
-              ? `Connected account: ${wallet}`
-              : "To use this app, you must connect using Metamask"}
-          </Typography>
-
           {isWalletConnected && (
             <Typography variant={isSmallScreen ? "body2" : "body1"}>
               {`Contract owner address: ${owner}`}
             </Typography>
           )}
-          {isOwner ? (
+          <Typography variant={isSmallScreen ? "body2" : "body1"}>
+            {isWalletConnected
+              ? `Connected account: ${wallet?.toUpperCase()}`
+              : "To use this app, you must connect using Metamask"}
+          </Typography>
+          <Typography variant={isSmallScreen ? "body2" : "body1"}>
+            {isWalletConnected
+              ? `Balance: ${balance.substring(0, 6)} GoerliETH`
+              : ""}
+          </Typography>
+
+          {isWalletConnected && (
             <Button variant="contained" color="secondary" onClick={mintHandler}>
               Mint NFT ✨
             </Button>
-          ) : (
-            <Typography variant={isSmallScreen ? "body2" : "body1"}>
-              To mint this token, you must be the contract owner
-            </Typography>
           )}
           <Button
             variant="contained"
